@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-25 13:18:25"
+	"lastUpdated": "2023-03-28 10:37:32"
 }
 
 /*
@@ -364,7 +364,7 @@ var BnfClass = function () {
 			}
 			// Supprime les sauts de ligne inutiles du champ history notes
 			if (/\n/.exec(noteText)) {
-				noteText = noteText.replace(/\n/, '');
+				noteText = noteText.replace(/\n/g, '');
 			}
 			// Nettoie tout le champ Extra
 			item.extra = cleanExtra(noteText);
@@ -376,11 +376,11 @@ var BnfClass = function () {
 	function getTitle(record, item) {
 		var titleTag = record.getFieldSubfields("200");
 		if (titleTag) {
-			titleTag = titleTag[0];
+			titleTag = titleTag[0];			
 			var titleText = titleTag.a;
 			if (titleTag.e) {
-				// Ne prendre $f que s'il est précédé par "Actes" dans $e
-				if (titleTag.e.match(/[Aa]ctes/)) {
+				// Ne prendre $f que s'il est précédé par "Actes" dans $e$	
+				if (titleTag.e.match(/[Aa]ctes/) && titleTag.f) {
 					if (!/^[,.:;-]/.exec(titleTag.f)) {
 					titleText += "[" + titleTag.e[1].toUpperCase() + titleTag.e.slice(2) + titleTag.f + "]";		
 					}
@@ -404,7 +404,7 @@ var BnfClass = function () {
 				titleText += ", " + titleTag.i;
 			}
 		}
-		shortTitleMatch = titleTag.a.match(/(.*)\b ?[:,(]?/);
+		shortTitleMatch = titleTag.a.match(/([^:,.;(]+[\?!"”»]?)/);
 		item.shortTitle = cleanTitle(shortTitleMatch[1])
 		item.title = cleanTitle(titleText);
 	}
@@ -430,19 +430,11 @@ var BnfClass = function () {
 		// Lexique
 		value = value.replace(/[Mm]oyen[  ][aâ]ge/g, 'Moyen Âge');
 		value = value.replace(/oeuvre/g, 'œuvre');
+		value = value.replace(/([Mm])oeurs/g, '$1œurs');
+		value = value.replace(/([Cc])oeur/g, '$1œur');
+		value = value.replace(/oeil/g, 'œil');
 		value = value.replace(/O[Ee]uvre/g, 'Œuvre');
 		value = value.replace(/\?uvre/g, 'œuvre');
-
-		// Ponctuation
-		value = value.replace(/[  ]*([,'.\]])/g, '$1');
-		value = value.replace(/'/g, '’');
-		value = value.replace(/[  ]*([:!?;»])/g, '$1');
-		value = value.replace(/([«])[  ]*/g, '$1 ');
-		value = value.replace(/[  ]*:[  ]*\[/g, ' [');
-		value = value.replace(/[  ]*[:,][  ]*actes(.*$)/g, ' [Actes$1]');
-		value = value.replace(/\[actes/g, '[Actes');
-		value = value.replace(/[  ]*[:,][  ]*colloque(.*$)/g, ' [Actes du colloque $1]');
-		value = value.replace(/\[colloque/g, '[Actes du colloque');
 
 		// Années
 		value = value.replace(/[  ]*[:,] *\(?([0-9]{4})[\- ]*([0-9]{4})\)?/g, ' ($1-$2)');
@@ -453,21 +445,11 @@ var BnfClass = function () {
 		if (value.match(/, +(\d)\. +/)) {
 			value = value.replace(/, +(\d)\. +/, '<i>, $1. </i>');
 		}
-
-		// Transformer les : > . dans les titres
-		 if (value.match(/:/)) {
-		 	firstMatch = value.match(/(.+)\b[  ]*:/);
-			firstPart = firstMatch[1]
- 		 	secondMatch = value.match(/: *\b(.+)/);
-	 	 	secondPart = secondMatch[1]
-			secondPart = secondPart[0].toUpperCase() + secondPart.slice(1);
-		  	value = firstPart += ". " + secondPart;
-		 }
 		
 		// Mettre en forme les siècles comme "XIIᵉ"
-		if (value.match(/(?![Vv]ie)\b(([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))[eEᵉ]| ?ème\b/)) {
-			value = value.replace(/(?![Vv]ie)\b(([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))[eEᵉ]| ?ème\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
-			value = value.replace(/[  ]*:[  ]*\(?((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?))?/g, ' ($1)');
+		if (value.match(/(?![Vv]ie)\b(([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?ème)\b/)) {
+			value = value.replace(/(?![Vv]ie)\b(([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?ème)\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
+			value = value.replace(/[  ]*:[  ]*\(?((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?))\)?/g, ' ($1)');
 			value = value.replace(/,[  ]*((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?)?)([  ]*[.:])?/g, ' ($1)$8');
 			value = value.replace(/[  ]*\(((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)/g, ' ($1');
 			value = value.replace(/(\b(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)[  ]*(siècles?)/g, '$1 $4');
@@ -475,6 +457,41 @@ var BnfClass = function () {
 
 		// Mettre en forme les siècles comme "<span style="font-variant:small-caps;">xii</span>ᵉ"
 		// value = value.replace(/(\b(X{0,2})(X|V|IX|IV|V?I{1,3}))(ᵉ)/g, function($0,$1) {return '<span style="font-variant:small-caps;">' + $1.toLowerCase() + '</span>ᵉ'});
+
+		// Transformer les : > . dans les titres
+		 if (value.match(/:/)) {
+		 	firstMatch = value.match(/(.+[^  ])[  ]*:/);
+			firstPart = firstMatch[1]
+ 		 	secondMatch = value.match(/: *([^  ].+)/);
+	 	 	secondPart = secondMatch[1]
+			secondPart = secondPart[0].toUpperCase() + secondPart.slice(1);
+		  	value = firstPart += ". " + secondPart;
+		 }
+
+		// Ponctuation
+		value = value.replace(/[  ]*([,'.\]])/g, '$1');
+		value = value.replace(/'/g, '’');
+		value = value.replace(/[  ]*([:!?;»])/g, ' $1');
+		value = value.replace(/([«])[  ]*/g, '$1 ');
+		value = value.replace(/[  ]*:[  ]*\[/g, ' [');
+		value = value.replace(/([?!])\./g, '$1');
+
+		value = value.replace(/[  ]*[:,][  ]*actes(.*$)/g, ' [Actes$1]');
+		value = value.replace(/\[actes/g, '[Actes');
+		value = value.replace(/[  ]*[:,][  ]*colloque(.*$)/g, ' [Actes du colloque $1]');
+		value = value.replace(/\[colloque/g, '[Actes du colloque');
+
+		// Guillemets courbes
+		value = value.replace(/"(\w)/g, '“$1');
+		value = value.replace(/(\w|[?!])"/g, '$1”');
+
+		// Supprime les [] dans les champs du titre
+		//		titleTag.e = titleTag.e.replace(/[\[\]]/g, '');
+		//		if (titleTag.f) {
+		//			if (titleTag.f.match(/[\[\]]/)) {
+		//				titleTag.f = titleTag.f.replace(/[\[\]]/g, '');
+		//			}	
+		//		}
 
 		// Capitaliser le titre si le champ country retourne US ?
 		// if (country.match(/US/)) {
@@ -497,6 +514,7 @@ var BnfClass = function () {
 
 		// Corriger la casse
 		value = value.replace(/les Belles lettres/g, 'Les Belles Lettres');
+		value = value.replace(/^Ed\./, 'Éd.');
 
 		// Première lettre en majuscule
 		value = value[0].toUpperCase() + value.slice(1);
@@ -591,7 +609,7 @@ record._associateDBField(newItem, "410", "x", "issn");
 				if (dim.a) {
 					// Je change la regex pour qu'elle capture les chiffres romains aussi
 					// var pages = /[^\d]*(\d+)\s+p\..*/.exec(dim.a);
-					var pages = /[^\dMDCLXVImdclxvi]*([MDCLXVImdclxvi]*-*\d+)\s+(p\.?|pages).*/.exec(dim.a);
+					var pages = /[^\dMDCLXVImdclxvi]*([MDCLXVImdclxvi]*-*\d+-*[MDCLXVImdclxvi]*)\s+(p\.?|pages).*/.exec(dim.a);
 					if (pages) {
 						newItem.numPages = pages[1].toLowerCase();
 					}
