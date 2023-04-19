@@ -1,15 +1,15 @@
 {
 	"translatorID": "47533cd7-ccaa-47a7-81bb-71c45e68a74d",
-	"label": "Bibliothèque nationale de France",
-	"creator": "Florian Ziche, Sylvain Machefert",
-	"target": "^https?://[^/]*catalogue\\.bnf\\.fr",
-	"minVersion": "3.0",
-	"maxVersion": "",
-	"priority": 100,
-	"inRepository": true,
-	"translatorType": 4,
-	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-28 10:37:32"
+		"label": "Bibliothèque nationale de France",
+			"creator": "Florian Ziche, Sylvain Machefert",
+				"target": "^https?://[^/]*catalogue\\.bnf\\.fr",
+					"minVersion": "3.0",
+						"maxVersion": "",
+							"priority": 100,
+								"inRepository": true,
+									"translatorType": 4,
+										"browserSupport": "gcsibv",
+											"lastUpdated": "2023-03-28 10:37:32"
 }
 
 /*
@@ -83,7 +83,7 @@ var BnfClass = function () {
 			// case "651":
 			// 	return "editorial-director";
 			case "230":
-				return "composer";			
+				return "composer";
 			case "245":
 				return "inventor";
 			case "255":
@@ -341,7 +341,7 @@ var BnfClass = function () {
 				noteText = addExtra(noteText, note.d);
 				noteText = addExtra(noteText, note.e);
 			}
-		}	
+		}
 		// Note
 		noteTag = record.getFieldSubfields("300");
 		if (noteTag) {
@@ -376,15 +376,15 @@ var BnfClass = function () {
 	function getTitle(record, item) {
 		var titleTag = record.getFieldSubfields("200");
 		if (titleTag) {
-			titleTag = titleTag[0];			
+			titleTag = titleTag[0];
 			var titleText = titleTag.a;
 			if (titleTag.e) {
 				// Ne prendre $f que s'il est précédé par "Actes" dans $e$	
 				if (titleTag.e.match(/[Aa]ctes/) && titleTag.f) {
 					if (!/^[,.:;-]/.exec(titleTag.f)) {
-					titleText += "[" + titleTag.e[1].toUpperCase() + titleTag.e.slice(2) + titleTag.f + "]";		
+						titleText += "[" + titleTag.e[1].toUpperCase() + titleTag.e.slice(2) + titleTag.f + "]";
 					}
-				}	
+				}
 				else if (!/^[,.:;-]/.exec(titleTag.e)) {
 					titleText += ": " + titleTag.e;
 				}
@@ -445,10 +445,10 @@ var BnfClass = function () {
 		if (value.match(/, +(\d)\. +/)) {
 			value = value.replace(/, +(\d)\. +/, '<i>, $1. </i>');
 		}
-		
+
 		// Mettre en forme les siècles comme "XIIᵉ"
-		if (value.match(/(?![Vv]ie)\b(([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?ème)\b/)) {
-			value = value.replace(/(?![Vv]ie)\b(([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?ème)\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
+		if (value.match(/(?![Vv]ie)[\s(](([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?ème)\b/)) {
+			value = value.replace(/(?![Vv]ie)[\s(](([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?ème)\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
 			value = value.replace(/[  ]*:[  ]*\(?((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?))\)?/g, ' ($1)');
 			value = value.replace(/,[  ]*((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?)?)([  ]*[.:])?/g, ' ($1)$8');
 			value = value.replace(/[  ]*\(((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)/g, ' ($1');
@@ -459,14 +459,14 @@ var BnfClass = function () {
 		// value = value.replace(/(\b(X{0,2})(X|V|IX|IV|V?I{1,3}))(ᵉ)/g, function($0,$1) {return '<span style="font-variant:small-caps;">' + $1.toLowerCase() + '</span>ᵉ'});
 
 		// Transformer les : > . dans les titres
-		 if (value.match(/:/)) {
-		 	firstMatch = value.match(/(.+[^  ])[  ]*:/);
+		if (value.match(/:/)) {
+			firstMatch = value.match(/(.+[^  ])[  ]*:/);
 			firstPart = firstMatch[1]
- 		 	secondMatch = value.match(/: *([^  ].+)/);
-	 	 	secondPart = secondMatch[1]
+			secondMatch = value.match(/: *([^  ].+)/);
+			secondPart = secondMatch[1]
 			secondPart = secondPart[0].toUpperCase() + secondPart.slice(1);
-		  	value = firstPart += ". " + secondPart;
-		 }
+			value = firstPart += ". " + secondPart;
+		}
 
 		// Ponctuation
 		value = value.replace(/[  ]*([,'.\]])/g, '$1');
@@ -598,9 +598,9 @@ var BnfClass = function () {
 		record._associateDBField(newItem, "102", "a", "country");
 		// ISSN
 		record._associateDBField(newItem, "225", "x", "issn");
-				if (!newItem.issn) {
-record._associateDBField(newItem, "410", "x", "issn");
-}
+		if (!newItem.issn) {
+			record._associateDBField(newItem, "410", "x", "issn");
+		}
 		// Try to retrieve volumes/pages from 215d
 		if (!newItem.pages) {
 			var dimTag = record.getFieldSubfields("215");
