@@ -468,6 +468,11 @@ var BnfClass = function () {
 			value = firstPart += ". " + secondPart;
 		}
 
+		// Exposant dans les titres
+		if (value.match(/[0-9]+e\b/)) {
+			value = value.replace(/([0-9]+)e\b/g, '$1ᵉ');
+		}
+
 		// Ponctuation
 		value = value.replace(/[  ]*([,'.\]])/g, '$1');
 		value = value.replace(/'/g, '’');
