@@ -447,8 +447,8 @@ var BnfClass = function () {
 		}
 
 		// Mettre en forme les siècles comme "XIIᵉ"
-		if (value.match(/(?![Vv]ie)[\s(](([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)\b/)) {
-			value = value.replace(/(?![Vv]ie)([\s(]([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
+		if (value.match(/(?![Vv]ie)[\s(](([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)/)) {
+			value = value.replace(/(?![Vv]ie)([\s(-]([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
 			value = value.replace(/[  ]*:[  ]*\(?((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?))\)?/g, ' ($1)');
 			value = value.replace(/,[  ]*((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?)?)([  ]*[.:])?/g, ' ($1)$8');
 			value = value.replace(/[  ]*\(((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)/g, ' ($1');
