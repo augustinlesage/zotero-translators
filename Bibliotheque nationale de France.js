@@ -269,6 +269,8 @@ var BnfClass = function () {
 	function getSeries(record, item) {
 		var seriesText = false;
 		var seriesText2 = false;
+		var seriesNumber = false;
+		var seriesNumber2 = false;
 		var seriesTag = record.getFieldSubfields("225");
 
 		if (seriesTag && seriesTag.length > 0) {
@@ -284,36 +286,58 @@ var BnfClass = function () {
 				}
 
 				if (series.v) {
+					if (!seriesNumber) {
+						seriesNumber = series.v;
+						item.seriesNumber = cleanSeries(seriesNumber);
+					} else {
+						seriesNumber2 = seriesNumber2 ? seriesNumber2 + " ; " + series.v : series.v;
+					}
+				}
+
+				if (series.v) {
 					seriesNumber = series.v;
+					item.seriesNumber = cleanSeries(seriesNumber);
 				}
 			}
 
 			if (seriesText) {
-				item.seriesNumber = cleanSeries(seriesNumber);
 				item.series = cleanSeries(seriesText);
 				if (seriesText2) {
 					item.series2 = cleanSeries(seriesText2);
 				}
+				if (seriesNumber2) {
+					item.series2Number = cleanSeries(seriesNumber2);
+				}
 			}
 		}
 		// Try 461
-		if (!item.series) {
-			seriesTag = record.getFieldSubfields("461");
-			if (seriesTag) {
-				for (let j in seriesTag) {
-					let series = seriesTag[j];
-					if (seriesText) {
-						seriesText += "; ";
+		var seriesText = false;
+		var seriesText2 = false;
+		var seriesTag = record.getFieldSubfields("461");
+
+		if (seriesTag && seriesTag.length > 0) {
+			for (let j = 0; j < seriesTag.length; j++) {
+				let series = seriesTag[j];
+
+				if (series.a) {
+					if (!seriesText) {
+						seriesText = series.a;
+					} else {
+						seriesText2 = seriesText2 ? seriesText2 + " ; " + series.a : series.a;
 					}
-					else {
-						seriesText = "";
-					}
-					seriesText += series.t;
+				}
+
+				if (series.v) {
+					seriesNumber = series.v;
+					item.seriesNumber = cleanSeries(seriesNumber);
 				}
 			}
+
 			if (seriesText) {
-				delete item.seriesNumber;
-				item.series = seriesText;
+				item.series = cleanSeries(seriesText);
+				if (seriesText2) {
+					item.series2 = cleanSeries(seriesText2);
+				}
 			}
 		}
 	}
@@ -540,6 +564,9 @@ var BnfClass = function () {
 		if (value === undefined) {
 			return null;
 		}
+
+		value = value.replace(/\.\s*$/, '');
+
 		// Supprimer "Collection" suivi d'un éventuel espace
 		value = value.replace(/Collection\s*/gi, '');
 
