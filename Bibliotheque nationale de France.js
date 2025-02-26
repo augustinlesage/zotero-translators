@@ -268,24 +268,32 @@ var BnfClass = function () {
 	// Get series (repeatable)
 	function getSeries(record, item) {
 		var seriesText = false;
+		var seriesText2 = false;
 		var seriesTag = record.getFieldSubfields("225");
-		if (seriesTag && seriesTag.length > 1) {
-			for (let j in seriesTag) {
+
+		if (seriesTag && seriesTag.length > 0) {
+			for (let j = 0; j < seriesTag.length; j++) {
 				let series = seriesTag[j];
-				if (seriesText) {
-					seriesText += "; ";
+
+				if (series.a) {
+					if (!seriesText) {
+						seriesText = series.a;
+					} else {
+						seriesText2 = seriesText2 ? seriesText2 + " ; " + series.a : series.a;
+					}
 				}
-				else {
-					seriesText = "";
-				}
-				seriesText += series.a;
+
 				if (series.v) {
-					seriesText += ", " + series.v;
+					seriesNumber = series.v;
 				}
 			}
+
 			if (seriesText) {
-				delete item.seriesNumber;
+				item.seriesNumber = cleanSeries(seriesNumber);
 				item.series = cleanSeries(seriesText);
+				if (seriesText2) {
+					item.series2 = cleanSeries(seriesText2);
+				}
 			}
 		}
 		// Try 461
@@ -305,72 +313,52 @@ var BnfClass = function () {
 			}
 			if (seriesText) {
 				delete item.seriesNumber;
-				item.series = cleanSeries(seriesText);
+				item.series = seriesText;
 			}
 		}
 	}
 
-	// Add extra text
 	function addExtra(noteText, extra) {
-		if (extra) {
-			if (noteText) {
-				if (!/\.$/.exec(noteText)) {
-					noteText += ". ";
-				}
-				else {
-					noteText += " ";
-				}
-			}
-			else {
-				noteText = "";
-			}
-			noteText += Zotero.Utilities.trim(extra);
-		}
-		return noteText;
-	}
+		if (!extra) return noteText;
 
-	// Assemble extra information
-	function getExtra(record, item) {
-		var noteText = false;
-		// Material description
-		var noteTag = record.getFieldSubfields("215");
-		if (noteTag) {
-			for (let j in noteTag) {
-				let note = noteTag[j];
-				noteText = addExtra(noteText, note.c);
-				noteText = addExtra(noteText, note.d);
-				noteText = addExtra(noteText, note.e);
-			}
-		}
-		// Note
-		noteTag = record.getFieldSubfields("300");
-		if (noteTag) {
-			for (let j in noteTag) {
-				let note = noteTag[j];
-				noteText = addExtra(noteText, note.a);
-			}
-		}
-		// Edition history notes
-		noteTag = record.getFieldSubfields("305");
-		if (noteTag) {
-			for (let j in noteTag) {
-				let note = noteTag[j];
-				noteText = addExtra(noteText, note.a);
-			}
-		}
 		if (noteText) {
-			if (!/\.$/.exec(noteText)) {
-				noteText += ".";
+			if (!noteText.endsWith('. ')) {
+				noteText += noteText.endsWith('.') ? ' ' : '. ';
 			}
-			// Supprime les sauts de ligne inutiles du champ history notes
-			if (/\n/.exec(noteText)) {
-				noteText = noteText.replace(/\n/g, '');
-			}
-			// Nettoie tout le champ Extra
-			item.extra = cleanExtra(noteText);
+		} else {
+			noteText = '';
 		}
+
+		return noteText + Zotero.Utilities.trim(extra);
 	}
 
+	function getExtra(record, item) {
+		let sections = [
+			{ tag: "215", label: "Material description" },
+			{ tag: "300", label: "General note" },
+			{ tag: "305", label: "Edition and bibliographic history" }
+		];
+
+		let notes = [];
+
+		for (let section of sections) {
+			let noteTag = record.getFieldSubfields(section.tag);
+			if (noteTag) {
+				let noteText = "";
+				for (let note of noteTag) {
+					for (let key in note) {
+						noteText = addExtra(noteText, note[key]);
+					}
+				}
+				if (noteText) notes.push(`${section.label}: ${noteText}`);
+			}
+		}
+
+		if (notes.length > 0) {
+			let finalText = notes.join('\n');
+			item.extra = cleanExtra(finalText.endsWith('.') ? finalText : finalText + '.');
+		}
+	}
 
 	// Get title from 200
 	function getTitle(record, item) {
@@ -390,7 +378,7 @@ var BnfClass = function () {
 				}
 				// titleText += titleTag.e;
 				// Une autre solution pour remplacer les : en . :
-				// titleText += titleTag.e[1].toUpperCase() + titleTag.e.slice(2);				
+				// titleText += titleTag.e[1].toUpperCase() + titleTag.e.slice(2);		
 			}
 			if (titleTag.h) {
 				titleText += ", " + titleTag.h;
@@ -403,10 +391,17 @@ var BnfClass = function () {
 			else if (titleTag.i) {
 				titleText += ", " + titleTag.i;
 			}
+
+			if (titleTag.a) {
+				var shortTitleMatch = titleTag.a.match(/([^:,.;(]+[\?!"”»]?)/);
+				if (shortTitleMatch) {
+					item.shortTitle = cleanTitle(shortTitleMatch[1]);
+				}
+			}
+
+			item.title = cleanTitle(titleText);
+
 		}
-		shortTitleMatch = titleTag.a.match(/([^:,.;(]+[\?!"”»]?)/);
-		item.shortTitle = cleanTitle(shortTitleMatch[1])
-		item.title = cleanTitle(titleText);
 	}
 
 	function cleanTitle(value) {
@@ -447,8 +442,8 @@ var BnfClass = function () {
 		}
 
 		// Mettre en forme les siècles comme "XIIᵉ"
-		if (value.match(/(?![Vv]ie)[\s(](([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)\b/)) {
-			value = value.replace(/(?![Vv]ie)([\s(-]([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
+		if (value.match(/[\s(]((?!(?:vie\b))([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)\b/)) {
+			value = value.replace(/[\s(]((?!(?:vie\b))([Xx]{0,2})([Xx]|[Vv]|[Ii][Xx]|[Ii][Vv]|[Vv]?[Ii]{1,3}))([eEᵉ]| ?[èe]me)\b/g, function ($0, $1) { return $1.toUpperCase() + 'ᵉ' });
 			value = value.replace(/[  ]*:[  ]*\(?((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?))\)?/g, ' ($1)');
 			value = value.replace(/,[  ]*((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ(\-(X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)?([  ]*siècles?)?)([  ]*[.:])?/g, ' ($1)$8');
 			value = value.replace(/[  ]*\(((X{0,2})(X|V|IX|IV|V?I{1,3})ᵉ)/g, ' ($1');
@@ -540,13 +535,16 @@ var BnfClass = function () {
 		return value;
 	}
 
-	// Ne fonctionne pas… Mofifier aussi les number pour enlever les N° etc.
+	// Ne fonctionne pas ?
 	function cleanSeries(value) {
 		if (value === undefined) {
 			return null;
 		}
-		// Supprimer le terme "collection"
-		value = value.replace(/Collection ?/g, '');
+		// Supprimer "Collection" suivi d'un éventuel espace
+		value = value.replace(/Collection\s*/gi, '');
+
+		// Supprimer "n°" (numéro) suivi d'un éventuel espace
+		value = value.replace(/n°\s*/gi, '');
 
 		return value;
 	}
@@ -593,7 +591,7 @@ var BnfClass = function () {
 		var url = record.getField("003");
 		if (url && url.length > 0 && url[0][1]) {
 			newItem.attachments.push({
-				title: 'BnF Link',
+				title: 'Notice BnF',
 				url: url[0][1],
 				mimeType: 'text/html',
 				snapshot: false
@@ -602,10 +600,21 @@ var BnfClass = function () {
 		// Country (102a)
 		record._associateDBField(newItem, "102", "a", "country");
 		// ISSN
-		record._associateDBField(newItem, "225", "x", "issn");
+		record._associateDBField(newItem, "225", "x", "ISSN");
 		if (!newItem.issn) {
-			record._associateDBField(newItem, "410", "x", "issn");
+			record._associateDBField(newItem, "410", "x", "ISSN");
 		}
+		// Language // NE FONCTIONNE PAS
+		// 	var itemLanguage = record._associateDBField(newItem, "101", "a", "language");
+		// 	newItem.language = cleanLanguage(itemLanguage)
+		// 		function cleanLanguage(value) {
+		// 	if (value === undefined) {
+		// 		return null;
+		// 	}
+		// 	// Changer le code ISO]
+		// 	value = value.replace(/fre/g, 'fr');
+		// 	return value;
+		// }
 		// Try to retrieve volumes/pages from 215d
 		if (!newItem.pages) {
 			var dimTag = record.getFieldSubfields("215");
@@ -626,6 +635,13 @@ var BnfClass = function () {
 					if (!newItem.numberOfVolumes) {
 						newItem.numberOfVolumes = "1";
 					}
+					// Capturer les informations de non paginé
+					if (!newItem.numPages) {
+						var nonpages = /(non paginé|n\.\sp\.).+\s+(\d+)\s*\]?\s*(p\.|pages).*/.exec(dim.a);
+						if (nonpages) {
+							newItem.numPages = "n. p. [ca " + nonpages[2] + " p.]";
+						}
+					}
 				}
 			}
 		}
@@ -637,6 +653,10 @@ var BnfClass = function () {
 		getTags(record, newItem);
 		// Repository
 		newItem.libraryCatalog = "BnF Catalogue général (http:// catalogue.bnf.fr)";
+		// Abstract note // Supprimer les sauts de ligne
+		if (newItem.abstractNote) {
+			newItem.abstractNote = newItem.abstractNote.replace(/\n/g, '');
+		}
 	}
 
 	// Public members
